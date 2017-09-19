@@ -1,70 +1,20 @@
-language: c
-matrix:
-  include:
-    - os: linux
-      dist: trusty
-    - os: linux
-      dist: trusty
-      env:
-        - BUILD_ANDROID=true
-    - os: osx
-sudo: required
-cache:
-  directories:
-    - $HOME/android-ndk-r14
+env:
+  global:
+  - secure: "L/pzocpnCGawVmTwPt+Y8xxTryePptOdkNM4NvJLVsyH5aIz+026TFwZ2lR01mBjhclO/CbdyaW774PRq4XE4qN/huSs35fXbyw9z6NoF+QgC99MrbNVvEsXdERY/3s+HLw+KgtYbDnxaicPutq65dmJgOipH7vYACyKPpgAiTg="
+  - secure: "Wv8lNh+gdT5sq2prOl1xVd5f0yMBJRxzs2l+x/J8XwtEfLNvof9HTX7hfkpF8/r6wpM8GtqGOHsq3XMHGwrIrX1TaYrDGPlQ6BXb07nWW+G6YIzjwTK8df+VRd5lGeJol+HW7TYstC+Hn82UAYjkoUCI86yHxNgImftrMT6ez6A="
+language: objective-c
+osx_image: xcode9
+compiler: clang
+before_install:
+- brew update
 install:
-  - >
-    if [[ "${TRAVIS_OS_NAME}" == "linux" && -z "${BUILD_ANDROID}" ]]; then
-      # Install pulseaudio, portaudio, ALSA, JACK dependencies for
-      # corresponding backends.
-      # Install Qt5 dependency for alsoft-config.
-      sudo apt-get install -qq \
-        libpulse-dev \
-        portaudio19-dev \
-        libasound2-dev \
-        libjack-dev \
-        qtbase5-dev
-    fi
-  - >
-    if [[ "${TRAVIS_OS_NAME}" == "linux" && "${BUILD_ANDROID}" == "true" ]]; then
-      if [[ ! -d ~/android-ndk-r14 || -z "$(ls -A ~/android-ndk-r14)" ]]; then
-        curl -o ~/android-ndk.zip https://dl.google.com/android/repository/android-ndk-r14-linux-x86_64.zip
-        unzip -q ~/android-ndk.zip -d ~ \
-          'android-ndk-r14/build/cmake/*' \
-          'android-ndk-r14/platforms/android-9/arch-arm/*' \
-          'android-ndk-r14/source.properties' \
-          'android-ndk-r14/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/*' \
-          'android-ndk-r14/sysroot/*' \
-          'android-ndk-r14/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/*' \
-          'android-ndk-r14/toolchains/llvm/prebuilt/linux-x86_64/*'
-        sed -i -e 's/VERSION 3.6.0/VERSION 3.2/' ~/android-ndk-r14/build/cmake/android.toolchain.cmake
-      fi
-    fi
+- brew install awscli
 script:
-  - >
-    if [[ "${TRAVIS_OS_NAME}" == "linux" && -z "${BUILD_ANDROID}" ]]; then
-      cmake \
-        -DALSOFT_REQUIRE_ALSA=ON \
-        -DALSOFT_REQUIRE_OSS=ON \
-        -DALSOFT_REQUIRE_PORTAUDIO=ON \
-        -DALSOFT_REQUIRE_PULSEAUDIO=ON \
-        -DALSOFT_REQUIRE_JACK=ON \
-        -DALSOFT_EMBED_HRTF_DATA=YES \
-        .
-    fi
-  - >
-    if [[ "${TRAVIS_OS_NAME}" == "linux" && "${BUILD_ANDROID}" == "true" ]]; then
-      cmake \
-        -DCMAKE_TOOLCHAIN_FILE=~/android-ndk-r14/build/cmake/android.toolchain.cmake \
-        -DALSOFT_REQUIRE_OPENSL=ON \
-        -DALSOFT_EMBED_HRTF_DATA=YES \
-        .
-    fi
-  - >
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
-      cmake \
-        -DALSOFT_REQUIRE_COREAUDIO=ON \
-        -DALSOFT_EMBED_HRTF_DATA=YES \
-        .
-    fi
-  - make -j2
+- mkdir OSX
+- cd OSX
+- cmake -DALSOFT_REQUIRE_COREAUDIO=ON -DALSOFT_EMBED_HRTF_DATA=YES -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 ..
+- cmake --build .
+- strip -u -r libopenal.dylib
+- "aws s3 cp libopenal.dylib s3://build.lwjgl.org/nightly/macosx/x64/libopenal.dylib --acl public-read --storage-class REDUCED_REDUNDANCY --cache-control \"public, must-revalidate, proxy-revalidate, max-age=0\""
+- "git log --pretty=format:%H HEAD~2..HEAD~1 | head -n 1 > revision.git"
+- "aws s3 cp revision.git s3://build.lwjgl.org/nightly/macosx/x64/libopenal.dylib.git --acl public-read --storage-class REDUCED_REDUNDANCY --cache-control \"public, must-revalidate, proxy-revalidate, max-age=0\""
