@@ -63,7 +63,7 @@ endif()
 
 
 IF(WIN32)
-    ADD_DEFINITIONS("-D_WIN32 -D_WIN32_WINNT=0x0502")
+    ADD_DEFINITIONS("-D_WIN32 -D_WIN32_WINNT=0x0501")
 
     OPTION(ALSOFT_BUILD_ROUTER  "Build the router (EXPERIMENTAL; creates OpenAL32.dll and soft_oal.dll)"  OFF)
 
@@ -303,7 +303,7 @@ IF(MSVC)
         MESSAGE(STATUS "Using DirectX SDK directory: ${DXSDK_DIR}")
     ENDIF()
 
-    OPTION(FORCE_STATIC_VCRT "Force /MT for static VC runtimes" OFF)
+    OPTION(FORCE_STATIC_VCRT "Force /MT for static VC runtimes" ON)
     IF(FORCE_STATIC_VCRT)
         FOREACH(flag_var
                 CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
@@ -497,7 +497,7 @@ IF(HAVE_INTRIN_H)
         }" HAVE_CPUID_INTRINSIC)
 ENDIF()
 
-CHECK_SYMBOL_EXISTS(aligned_alloc    stdlib.h HAVE_ALIGNED_ALLOC)
+#CHECK_SYMBOL_EXISTS(aligned_alloc    stdlib.h HAVE_ALIGNED_ALLOC)
 CHECK_SYMBOL_EXISTS(posix_memalign   stdlib.h HAVE_POSIX_MEMALIGN)
 CHECK_SYMBOL_EXISTS(_aligned_malloc  malloc.h HAVE__ALIGNED_MALLOC)
 CHECK_SYMBOL_EXISTS(lrintf math.h HAVE_LRINTF)
@@ -695,6 +695,10 @@ SET(COMMON_OBJS  common/almalloc.c
                  common/threads.c
                  common/uintmap.c
 )
+if (UNIX)
+	list(APPEND COMMON_OBJS common/wrap_memcpy.c)
+endif()
+
 SET(OPENAL_OBJS  OpenAL32/alAuxEffectSlot.c
                  OpenAL32/alBuffer.c
                  OpenAL32/alEffect.c
