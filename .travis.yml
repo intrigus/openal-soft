@@ -27,7 +27,7 @@ script:
 - rpxc bash -c 'sudo find / -name *asoun*'
 - mkdir LINUX
 - echo 'cd LINUX' >> tempScript.sh
-- echo 'CC="arm-linux-gnueabihf-gcc" CXX="arm-linux-gnueabihf-g++" cmake -DALSOFT_REQUIRE_ALSA=ON -DALSOFT_REQUIRE_OSS=ON -DALSOFT_REQUIRE_PORTAUDIO=ON -DALSOFT_REQUIRE_PULSEAUDIO=ON -DALSOFT_REQUIRE_JACK=ON -DALSOFT_EMBED_HRTF_DATA=YES -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0" ..' >> tempScript.sh
+- echo 'CC="arm-linux-gnueabihf-gcc" CXX="arm-linux-gnueabihf-g++" cmake -DCMAKE_LIBRARY_ARCHITECTURE=arm-linux-gnueabihf -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DCMAKE_SYSROOT=${SYSROOT} -DALSOFT_REQUIRE_ALSA=ON -DALSOFT_REQUIRE_OSS=ON -DALSOFT_REQUIRE_PORTAUDIO=ON -DALSOFT_REQUIRE_PULSEAUDIO=ON -DALSOFT_REQUIRE_JACK=ON -DALSOFT_EMBED_HRTF_DATA=YES -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0" ..' >> tempScript.sh
 - echo 'cmake --build .' >> tempScript.sh
 - echo 'arm-linux-gnueabihf-strip libopenal.so' >> tempScript.sh
 - chmod +x tempScript.sh
